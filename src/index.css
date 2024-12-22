@@ -1,0 +1,19 @@
+body {
+  background: rgb(69,231,24);
+  background: radial-gradient(circle, rgba(69,231,24,1) 0%, rgba(45,189,5,1) 50%, rgba(181,255,0,1) 100%);
+  background-repeat:round;
+  font-family: 'Montserrat', sans-serif;
+}
+.carousel-control-prev-icon, .carousel-control-next-icon {
+  background-color: black;
+}
+
+.carousel-control-prev-icon:before, .carousel-control-next-icon:before {
+  color: white;
+}
+
+.nav-link.fs-4.me-2 .svg-inline--fa {
+  font-size: inherit;
+  color: inherit;
+}
+
