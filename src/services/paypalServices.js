@@ -1,7 +1,8 @@
 /* global paypal */
 import React, { useEffect } from "react";
 
-const endpoint = 'http://localhost:8000/api/purchaseOrder';
+
+const endpoint = 'https://api-app-e2241cc691d2.herokuapp.com/api/purchaseOrder';
 
 function PayPalButton() {
   useEffect(() => {

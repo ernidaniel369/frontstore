@@ -8,7 +8,7 @@ import { Product } from '../../services/cartServices';
 import AuthUser from "../AuthUser";
 
 
-const endpoint = 'http://localhost:8000/api';
+const endpoint = 'https://api-app-e2241cc691d2.herokuapp.com/api';
 
 const ProductDetail = () => {
 

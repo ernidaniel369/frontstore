@@ -9,8 +9,8 @@ import axios from 'axios';
 
 
 
-const endpointP = 'http://localhost:8000/api/purchaseOrder';
-const endpoint = 'http://localhost:8000/api';
+const endpointP = 'https://api-app-e2241cc691d2.herokuapp.com/api/purchaseOrder';
+const endpoint = 'https://api-app-e2241cc691d2.herokuapp.com/api';
 
 const ProductCart = () => {
   const [products, setProducts] = useState([]);

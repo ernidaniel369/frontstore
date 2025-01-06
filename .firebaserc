@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "appstore-bab3d"
-  }
+    "default": "appstore-25b0e",
+    "Prime": "appstore-25b0e"
+  },
+  "targets": {},
+  "etags": {}
 }

@@ -38,13 +38,14 @@ export default function AuthUser(){
     }
 
     const http = axios.create({
-        baseURL:"http://localhost:8000/api",
+        baseURL:"https://api-app-e2241cc691d2.herokuapp.com/api",
         headers:{
             "Content-type" : "application/json",
             "Authorization" : `Bearer ${token}`
         }
     });
-
+    
+    
     return {
         setToken:saveToken,
         token,
