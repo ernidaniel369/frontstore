@@ -1,13 +1,11 @@
 /* global paypal */
 import React, { useState, useEffect } from 'react';
-import { Container, ListGroup, Button } from 'react-bootstrap';
+import { Container, ListGroup, Button, Alert, Form } from 'react-bootstrap';
 import { Product } from '../../services/cartServices';
 import AuthUser from "../AuthUser";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus, faMinus, faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
-
-
 
 const endpointP = 'https://api-app-e2241cc691d2.herokuapp.com/api/purchaseOrder';
 const endpoint = 'https://api-app-e2241cc691d2.herokuapp.com/api';
@@ -17,6 +15,7 @@ const ProductCart = () => {
   const { http } = AuthUser();
   const [userdetail, setUserdetail] = useState("");
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [totalAmount, setTotalAmount] = useState(0);
 
   useEffect(() => {
     fetchUserDetail();
@@ -34,174 +33,133 @@ const ProductCart = () => {
     setProducts(Product.getAllProducts(userEmail));
   }, [userEmail]);
 
+  useEffect(() => {
+    updateTotalAmount();
+  }, [products]);
+
+  const updateTotalAmount = () => {
+    const newTotalAmount = products.reduce((total, product) => {
+      const productPrice = parseFloat(product.price);
+      return !isNaN(productPrice) ? total + productPrice * (product.quantity || 1) : total;
+    }, 0);
+    setTotalAmount(newTotalAmount);
+  };
+
   const suprProduct = (id) => {
     Product.deleteProduct(id, userEmail);
     setProducts(products.filter(product => product.id !== id));
   };
 
-  const handleQuantityChange = (id, event) => {
-    const quantity = event.target.value;
+  const handleQuantityChange = (id, type) => {
     setProducts(products.map(product => {
       if (product.id === id) {
-        return {
-          ...product,
-          quantity: quantity
-        };
-      } else {
-        return product;
+        const newQuantity = type === 'increment' 
+          ? Math.min(product.quantity + 1, product.stock)
+          : Math.max(product.quantity - 1, 1);
+        return { ...product, quantity: newQuantity };
       }
+      return product;
     }));
   };
 
   const handleBuyClick = () => {
-    console.log(products);
-  
-    // Realiza la solicitud para actualizar el stock de los productos
-    const updatePromises = products.map(product => {
-      return axios.put(`${endpoint}/updateProduct/${product.id}`, {
+    const updatePromises = products.map(product =>
+      axios.put(`${endpoint}/updateProduct/${product.id}`, {
         stock: product.stock - product.quantity,
-      });
-    });
+      })
+    );
 
-    // Realiza la solicitud para crear la orden
-    const orderPromises = products.map(product => {
-      return axios.post(`${endpoint}/createOrder`, {
+    const orderPromises = products.map(product =>
+      axios.post(`${endpoint}/createOrder`, {
         name: product.name,
         price: product.price * product.quantity,
         amount: product.quantity,
         email: userEmail,
-      });
-    });
+      })
+    );
 
     Promise.all([...updatePromises, ...orderPromises])
-      .then(() => {
-        console.log('Todas las solicitudes completadas exitosamente');
-        setPurchaseSuccess(true);
-      })
-      .catch(error => {
-        console.log('Error en las solicitudes:', error);
-      });
+      .then(() => setPurchaseSuccess(true))
+      .catch(error => console.log('Error en las solicitudes:', error));
   };
 
-  const updateTotalAmount = () => {
-    const newTotalAmount = products.reduce((total, product) => {
-      const productPrice = parseFloat(product.price);
-      if (!isNaN(productPrice)) {
-        return total + productPrice * (product.quantity || 1);
-      } else {
-        return total;
-      }
-    }, 0);
-    setTotalAmount(newTotalAmount);
-  };
-
-  const [totalAmount, setTotalAmount] = useState(0);
-
-  useEffect(() => {
-    updateTotalAmount();
-  }, [products]);
-  
   useEffect(() => {
     const script = document.createElement("script");
-    script.src =
-      "https://www.paypal.com/sdk/js?client-id=AaF5giuuw8Gpy6TFn6zC-8acIgTkrHAft2sgolRG87vJTLZgjS4seVMyVbQ6EPEcXJAsvAqb34VGei0s&currency=USD";
+    script.src = "https://www.paypal.com/sdk/js?client-id=AaF5giuuw8Gpy6TFn6zC-8acIgTkrHAft2sgolRG87vJTLZgjS4seVMyVbQ6EPEcXJAsvAqb34VGei0s&currency=USD";
     script.addEventListener("load", () => {
       if (totalAmount > 0) {
         paypal.Buttons({
-          createOrder: function (data, actions) {
-            return actions.order.create({
-              purchase_units: [{
-                amount: {
-                  value: totalAmount
-                }
-              }]
-            });
-          },
-          onApprove: function (data, actions) {
-            return actions.order.capture().then(function (details) {
-              console.log(details);
-              fetch(endpointP, {
-                method: 'post',
-                headers: {
-                  'content-type': 'application/json'
-                }, 
-                body: JSON.stringify({
-                  data: data,
-                  details: details
-                })
-              }).then(() => {
-                handleBuyClick();
-              });
-            });
-          },
-          onCancel: function (data) {
-            return (alert("pago cancelado"),
-              console.log(data))
-          }
+          createOrder: (data, actions) => actions.order.create({
+            purchase_units: [{ amount: { value: totalAmount } }]
+          }),
+          onApprove: (data, actions) => actions.order.capture().then((details) => {
+            fetch(endpointP, {
+              method: 'post',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ data, details })
+            }).then(() => handleBuyClick());
+          }),
+          onCancel: (data) => alert("Pago cancelado")
         }).render("#paypal-button-container");
       }
     });
     document.body.appendChild(script);
 
-    return () => {
-      document.body.removeChild(script);
-    };
+    return () => document.body.removeChild(script);
   }, [totalAmount]);
 
-  const compraExitosa = () => {
-    if (purchaseSuccess) {
-      alert ("Compra exitosa");
-      Product.muestraCookies();
-      window.location.href = '/';
-    }
-  };
-
-  
-
   return (
-    <Container>
-      <h1>All Products</h1>
-      <ListGroup>
-        {products.map(product => (
-          <ListGroup.Item key={product.id}>
-            <h5>{product.name}</h5>
-            <p>{product.description}</p>
-            <p>Stock actual: {product.stock}</p>
-            <div>
-              <label>
-                Quantity:
-                <input
-                  type="number"
-                  value={product.quantity}
-                  onChange={(event) => {
-                    handleQuantityChange(product.id, event);
-                    updateTotalAmount();
-                  }}
-                  min="1"
-                  max={product.stock}
+    <Container className="py-5" style={{ backgroundColor: "#004d40", minHeight: "100vh" }}>
+      <h2 className="text-center text-light mb-4">
+        <FontAwesomeIcon icon={faShoppingCart} /> 🛒 Carrito de Compras
+      </h2>
+
+      {purchaseSuccess && <Alert variant="success" className="text-center">¡Compra realizada con éxito! 🌿</Alert>}
+
+      <ListGroup className="mb-4">
+        {products.length === 0 ? (
+          <Alert variant="warning" className="text-center">🛒 Tu carrito está vacío</Alert>
+        ) : (
+          products.map(product => (
+            <ListGroup.Item key={product.id} className="d-flex justify-content-between align-items-center p-3" style={{ backgroundColor: "#00695c", color: "white" }}>
+              <div>
+                <h5 className="fw-bold">{product.name}</h5>
+                <p className="mb-1">Stock disponible: {product.stock}</p>
+                <p className="mb-1 fw-bold text-warning">Precio: ${product.price * (product.quantity || 1)}</p>
+              </div>
+              
+              <div className="d-flex align-items-center">
+                <Button variant="light" className="me-2" onClick={() => handleQuantityChange(product.id, 'decrement')}>
+                  <FontAwesomeIcon icon={faMinus} />
+                </Button>
+                <Form.Control 
+                  type="number" 
+                  value={product.quantity} 
+                  readOnly 
+                  className="text-center"
+                  style={{ width: "50px" }}
                 />
-              </label>
-            </div>
-            <p>Price: ${product.price * (product.quantity || 1)}</p>
-            <Button variant='danger' onClick={() => suprProduct(product.id)}>
-              <FontAwesomeIcon icon={faTrash} />
-            </Button>
-          </ListGroup.Item>
-        ))}
+                <Button variant="light" className="ms-2" onClick={() => handleQuantityChange(product.id, 'increment')}>
+                  <FontAwesomeIcon icon={faPlus} />
+                </Button>
+              </div>
+
+              <Button variant="danger" onClick={() => suprProduct(product.id)}>
+                <FontAwesomeIcon icon={faTrash} />
+              </Button>
+            </ListGroup.Item>
+          ))
+        )}
       </ListGroup>
-      {totalAmount === 0 && (
-        <p>Carro vacío</p>
-      )}
+
       {totalAmount > 0 && (
         <>
-          <h2>Precio total: ${totalAmount}</h2>
-          <h2>Paypal</h2>
-          <div>
+          <h3 className="text-light text-center">💰 Total: ${totalAmount}</h3>
+          <div className="d-flex justify-content-center">
             <div id="paypal-button-container"></div>
           </div>
         </>
       )}
-      {compraExitosa()}
     </Container>
   );
 }

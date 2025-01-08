@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Helmet } from "react-helmet";
 
-export const Dahsboard = () => {
+export const Dashboard = () => {
   const { http } = AuthUser();
-  const [userdetail, setUserdetail] = useState("");
+  const [userdetail, setUserdetail] = useState(null); 
 
   useEffect(() => {
     fetchUserDetail();
@@ -17,44 +17,35 @@ export const Dahsboard = () => {
     });
   };
 
-  function renderElement() {
-    if (userdetail) {
-      return (
-        <div className="d-flex justify-content-center">
-          <div className="card m-5 bg-dark w-50">
-            <div className="card-body ">
-              <h4 className="text-light fst-italic">Username</h4>
-              <p className="text-light ps-3">• {userdetail.name}</p>
-              <h4 className="text-light fst-italic">Email</h4>
-              <p className="text-light ps-3">• {userdetail.email}</p>
-            </div>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="d-flex justify-content-center">
-          <div className="card m-5 bg-dark w-50">
-            <div className="card-body ">
-              <h4 className="text-light fst-italic">Username</h4>
-              <h4 className="text-light fst-italic">Email</h4>
-            </div>
-          </div>
-        </div>
-      );
-    }
-  }
-
   return (
-    <div>
+    <div className="d-flex justify-content-center align-items-center vh-100" style={{ backgroundColor: "#004d40" }}>
       <Helmet>
-        <title>Profile</title>
-        <meta name="description" content="Helmet application" />
+        <title>Perfil</title>
+        <meta name="description" content="Perfil de usuario" />
       </Helmet>
-      {renderElement()}
+
+      <div className="card text-light shadow-lg p-4" style={{ width: "400px", backgroundColor: "#00695c", borderRadius: "12px" }}>
+        <div className="card-body text-center">
+          <h2 className="mb-4">Perfil de Usuario</h2>
+
+          {userdetail ? (
+            <>
+              <h4 className="fw-bold">Nombre</h4>
+              <p className="fs-5">{userdetail.name}</p>
+              <h4 className="fw-bold">Correo Electrónico</h4>
+              <p className="fs-5">{userdetail.email}</p>
+            </>
+          ) : (
+            <div className="d-flex justify-content-center">
+              <div className="spinner-border text-light" role="status">
+                <span className="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Dahsboard;
-
+export default Dashboard;
