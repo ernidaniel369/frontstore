@@ -24,7 +24,7 @@ function Home() {
                         <h5 className="card-text mt-3 mb-4">
                             Energías Renovables para un Mundo Mejor
                         </h5>
-                        <p className="card-text">
+                        <span className="card-text">
                             <small>
                                 En nuestra tienda, creemos en el poder de la energía renovable. Desde celdas solares hasta productos ecológicos, cada compra que realizas no solo mejora tu vida, sino que también ayuda a proteger el planeta.  
                                 <br /><br />
@@ -38,7 +38,7 @@ function Home() {
                                     <li>✔ Contribuye a un futuro sostenible</li>
                                 </ul>
                             </small>
-                        </p>
+                        </span>
                     </div>
                 </div>
             </div>

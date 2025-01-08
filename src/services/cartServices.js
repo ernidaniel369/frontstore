@@ -13,7 +13,7 @@ export class Product {
   static addNewProduct(id, name, price, stock, email) {
     const newProduct = new Product(id, name, price, stock);
     this.addProduct(newProduct, email);
-    console.log('item agregado');
+    console.log('Producto agregado al carrito');
   }
 
   static addProduct(product, email) {
@@ -21,17 +21,14 @@ export class Product {
     const existingProductIndex = products.findIndex(p => p.id === product.id);
 
     if (existingProductIndex !== -1) {
-        // Si el producto ya está en el carrito, incrementa la cantidad
-        products[existingProductIndex].quantity++;
+      products[existingProductIndex].quantity++;
     } else {
-        // Si es un nuevo producto, establece la cantidad en 1
-        product.quantity = 1;
-        products.push(product);
+      product.quantity = 1;
+      products.push(product);
     }
 
     Cookies.set(`products-${email}`, JSON.stringify(products));
-}
-
+  }
 
   static getAllProducts(email) {
     const products = Cookies.get(`products-${email}`);
@@ -45,9 +42,10 @@ export class Product {
     return [];
   }
 
-static deleteProduct(id, email) {
-    const products = JSON.parse(Cookies.get(`products-${email}`));
+  static deleteProduct(id, email) {
+    const products = JSON.parse(Cookies.get(`products-${email}`) || '[]');
     const productIndex = products.findIndex(product => product.id === id);
+
     if (productIndex > -1) {
       products.splice(productIndex, 1);
       Cookies.set(`products-${email}`, JSON.stringify(products));
@@ -55,17 +53,47 @@ static deleteProduct(id, email) {
     } else {
       console.log(`No se encontró ningún producto con el id ${id}.`);
     }
-}
-  //muestra y elimina todas las cookies 
-  static muestraCookies() {
-    Object.keys(Cookies.get()).forEach(function (products) {
-      Cookies.remove(products);
-    });
-    console.log('cookies eliminadas');
-    
   }
 
-  
-  
+ 
+  static decreaseQuantity(id, email) {
+    const products = JSON.parse(Cookies.get(`products-${email}`) || '[]');
+    const productIndex = products.findIndex(product => product.id === id);
 
+    if (productIndex > -1) {
+      if (products[productIndex].quantity > 1) {
+        products[productIndex].quantity--;
+      } else {
+        products.splice(productIndex, 1);
+      }
+      Cookies.set(`products-${email}`, JSON.stringify(products));
+      console.log(`Cantidad reducida para el producto ${id}.`);
+    } else {
+      console.log(`No se encontró ningún producto con el id ${id}.`);
+    }
+  }
+
+ 
+  static checkout(email) {
+    const products = this.getAllProducts(email);
+    if (products.length === 0) {
+      console.log("No hay productos en el carrito.");
+      return;
+    }
+
+    
+    
+    alert("¡Compra realizada con éxito! Gracias por tu compra."); 
+    Cookies.remove(`products-${email}`); 
+
+    
+    window.location.href = "/"; 
+  }
+
+  static muestraCookies() {
+    Object.keys(Cookies.get()).forEach(products => {
+      Cookies.remove(products);
+    });
+    console.log('Cookies eliminadas');
+  }
 }
