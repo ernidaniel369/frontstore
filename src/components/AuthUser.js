@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Product } from '../services/cartServices';
 
 export default function AuthUser(){
 
