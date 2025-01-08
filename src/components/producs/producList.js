@@ -4,8 +4,8 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import endpoint from '../../services/config';
 
-const endpoint = 'https://api-app-e2241cc691d2.herokuapp.com/api';
 
 const ProducList = () => {
   const [products, setProducts] = useState([]);

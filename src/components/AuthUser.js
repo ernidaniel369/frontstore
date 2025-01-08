@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import endpoint from '../services/config';
+
 
 export default function AuthUser(){
 
@@ -37,7 +39,7 @@ export default function AuthUser(){
     }
 
     const http = axios.create({
-        baseURL:"https://api-app-e2241cc691d2.herokuapp.com/api",
+        baseURL:endpoint,
         headers:{
             "Content-type" : "application/json",
             "Authorization" : `Bearer ${token}`

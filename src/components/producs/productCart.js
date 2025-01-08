@@ -1,14 +1,16 @@
 /* global paypal */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, ListGroup, Button, Alert, Form } from 'react-bootstrap';
 import { Product } from '../../services/cartServices';
 import AuthUser from "../AuthUser";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus, faMinus, faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import endpoint from '../../services/config';
 
-const endpointP = 'https://api-app-e2241cc691d2.herokuapp.com/api/purchaseOrder';
-const endpoint = 'https://api-app-e2241cc691d2.herokuapp.com/api';
+
+const endpointP = `${endpoint}/purchaseOrder`;
 
 const ProductCart = () => {
   const [products, setProducts] = useState([]);
@@ -16,16 +18,17 @@ const ProductCart = () => {
   const [userdetail, setUserdetail] = useState("");
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchUserDetail();
-  }, []);
-
-  const fetchUserDetail = () => {
+  const fetchUserDetail = useCallback(() => {
     http.post("/me").then((res) => {
       setUserdetail(res.data);
     });
-  };
+  }, [http]);
+
+  useEffect(() => {
+    fetchUserDetail();
+  }, [fetchUserDetail]);
 
   const userEmail = userdetail.email;
 
@@ -33,17 +36,17 @@ const ProductCart = () => {
     setProducts(Product.getAllProducts(userEmail));
   }, [userEmail]);
 
-  useEffect(() => {
-    updateTotalAmount();
-  }, [products]);
-
-  const updateTotalAmount = () => {
+  const updateTotalAmount = useCallback(() => {
     const newTotalAmount = products.reduce((total, product) => {
       const productPrice = parseFloat(product.price);
       return !isNaN(productPrice) ? total + productPrice * (product.quantity || 1) : total;
     }, 0);
     setTotalAmount(newTotalAmount);
-  };
+  }, [products]);
+
+  useEffect(() => {
+    updateTotalAmount();
+  }, [updateTotalAmount]);
 
   const suprProduct = (id) => {
     Product.deleteProduct(id, userEmail);
@@ -62,7 +65,7 @@ const ProductCart = () => {
     }));
   };
 
-  const handleBuyClick = () => {
+  const handleBuyClick = useCallback(() => {
     const updatePromises = products.map(product =>
       axios.put(`${endpoint}/updateProduct/${product.id}`, {
         stock: product.stock - product.quantity,
@@ -79,12 +82,25 @@ const ProductCart = () => {
     );
 
     Promise.all([...updatePromises, ...orderPromises])
-      .then(() => setPurchaseSuccess(true))
+      .then(() => {
+        setPurchaseSuccess(true);
+        Product.checkout(userEmail); 
+        setProducts([]); 
+        setTimeout(() => navigate("/"), 2000); 
+      })
       .catch(error => console.log('Error en las solicitudes:', error));
-  };
+  }, [products, userEmail, navigate]);
 
   useEffect(() => {
+    const scriptId = "paypal-sdk-script";
+    const existingScript = document.getElementById(scriptId);
+
+    if (existingScript) {
+      existingScript.remove();
+    }
+
     const script = document.createElement("script");
+    script.id = scriptId;
     script.src = "https://www.paypal.com/sdk/js?client-id=AaF5giuuw8Gpy6TFn6zC-8acIgTkrHAft2sgolRG87vJTLZgjS4seVMyVbQ6EPEcXJAsvAqb34VGei0s&currency=USD";
     script.addEventListener("load", () => {
       if (totalAmount > 0) {
@@ -97,16 +113,18 @@ const ProductCart = () => {
               method: 'post',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ data, details })
-            }).then(() => handleBuyClick());
+            })
+            .then(() => handleBuyClick());
           }),
           onCancel: (data) => alert("Pago cancelado")
         }).render("#paypal-button-container");
       }
     });
+
     document.body.appendChild(script);
 
     return () => document.body.removeChild(script);
-  }, [totalAmount]);
+  }, [totalAmount, handleBuyClick]);
 
   return (
     <Container className="py-5" style={{ backgroundColor: "#004d40", minHeight: "100vh" }}>

@@ -6,8 +6,8 @@ import { Product } from '../../services/cartServices';
 import AuthUser from "../AuthUser";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../../index.css';
+import endpoint from '../../services/config';
 
-const endpoint = 'https://api-app-e2241cc691d2.herokuapp.com/api';
 
 const ProductDetail = () => {
     const [product, setProduct] = useState(null);
