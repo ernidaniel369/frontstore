@@ -9,32 +9,33 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import endpoint from '../../services/config';
 
-
 const endpointP = `${endpoint}/purchaseOrder`;
 
 const ProductCart = () => {
   const [products, setProducts] = useState([]);
   const { http } = AuthUser();
-  const [userdetail, setUserdetail] = useState("");
+  const [userdetail, setUserdetail] = useState(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
   const navigate = useNavigate();
 
   const fetchUserDetail = useCallback(() => {
-    http.post("/me").then((res) => {
-      setUserdetail(res.data);
-    });
-  }, [http]);
+    if (!userdetail) { 
+      http.post("/me").then((res) => {
+        setUserdetail(res.data);
+      });
+    }
+  }, [http, userdetail]); 
 
   useEffect(() => {
     fetchUserDetail();
   }, [fetchUserDetail]);
 
-  const userEmail = userdetail.email;
-
   useEffect(() => {
-    setProducts(Product.getAllProducts(userEmail));
-  }, [userEmail]);
+    if (userdetail && userdetail.email) {
+      setProducts(Product.getAllProducts(userdetail.email));
+    }
+  }, [userdetail]);
 
   const updateTotalAmount = useCallback(() => {
     const newTotalAmount = products.reduce((total, product) => {
@@ -49,7 +50,7 @@ const ProductCart = () => {
   }, [updateTotalAmount]);
 
   const suprProduct = (id) => {
-    Product.deleteProduct(id, userEmail);
+    Product.deleteProduct(id, userdetail.email);
     setProducts(products.filter(product => product.id !== id));
   };
 
@@ -77,19 +78,19 @@ const ProductCart = () => {
         name: product.name,
         price: product.price * product.quantity,
         amount: product.quantity,
-        email: userEmail,
+        email: userdetail.email,
       })
     );
 
     Promise.all([...updatePromises, ...orderPromises])
       .then(() => {
         setPurchaseSuccess(true);
-        Product.checkout(userEmail); 
+        Product.checkout(userdetail.email); 
         setProducts([]); 
         setTimeout(() => navigate("/"), 2000); 
       })
       .catch(error => console.log('Error en las solicitudes:', error));
-  }, [products, userEmail, navigate]);
+  }, [products, userdetail, navigate]);
 
   useEffect(() => {
     const scriptId = "paypal-sdk-script";
